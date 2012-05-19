@@ -1,0 +1,8 @@
+gr.fire.browser
+gr.fire.browser.util
+gr.fire.core
+gr.fire.test
+gr.fire.ui
+gr.fire.util
+org.kxml2.io
+org.xmlpull.v1
