@@ -1,5 +1,5 @@
 /**
- * Test.java
+ * dsa.java
  * 
  * Copyright (c) 2004-2010 UC Mobile Ltd.
  * F/4,Building B,Guangzhou Xinxigang,No.16 Keyun Rd,Guangzhou,China
@@ -7,11 +7,11 @@
  * 
  * Created on 2012-6-30
  */
-package cn.uc;
+package india.xxoo.ui;
 
 /**
  * //TODO Administrator自动生成javadoc
- * <b>Test简介:</b>
+ * <b>dsa简介:</b>
  * <p>简要的描述此类的作用</p>
  *
  * <b>功能描述:</b>
@@ -26,6 +26,6 @@ package cn.uc;
  * @author Administrator
  * @version 1.0
  */
-public class Test {
+public class dsa {
 
 }
