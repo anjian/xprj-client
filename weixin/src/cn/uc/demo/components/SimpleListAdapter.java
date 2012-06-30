@@ -62,7 +62,7 @@ public final class SimpleListAdapter extends BasicEventHandler implements
 	}
 
 	/** {@inheritDoc} */
-	public int getItemCommonHeight() {
+	public int getItemCommonHeight(int aIdx) {
 
 		return FontEx.getDefaultFont().getHeight() + 10;
 	}
@@ -88,7 +88,7 @@ public final class SimpleListAdapter extends BasicEventHandler implements
 		// aG.drawLine(0, this.getItemHeight() * 2 - 1, aItemWidth,
 		// this.getItemHeight() * 2 - 1);
 
-		return getItemCommonHeight() * 2;
+		return getItemCommonHeight(aIdx) * 2;
 	}
 
 	/** {@inheritDoc} */

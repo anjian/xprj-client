@@ -1,68 +1,47 @@
-/**
- * Tiny.cn.uc.ui.TitleBar.java, 2010-12-17
- * 
- * Copyright (c) 2010, 2011 UC Mobile, All rights reserved.
- */
 package cn.uc.tiny;
 
-import javax.microedition.lcdui.Canvas;
-
+import cn.uc.tiny.ex.BasicEventHandler;
 import cn.uc.tiny.ex.Brush;
 import cn.uc.tiny.ex.CanvasEx;
 import cn.uc.tiny.ex.Event;
 import cn.uc.tiny.ex.GraphicsEx;
-import cn.uc.tiny.ex.Color;
-import cn.uc.util.StringUtils;
 
-/**
- * 
- * 
- * @author <a href="mailto:yixx@ucweb.com">Roger Yi</a>
- * @since 1.0
- * @version 1.0
- */
 public class TitleBar extends Component {
-
-	private String title = StringUtils.EMPTY;
-	private String showTitle = StringUtils.EMPTY;
+	private String title = "";
+	private String showTitle = "";
 	private int timer;
 
 	public TitleBar() {
-
-		setAttr(Attr.FOCUSABLE, true);
+		setAttr(16, true);
 	}
 
-	/** {@inheritDoc} */
 	public String getClazz() {
-
 		return "TitleBar";
 	}
 
 	protected void initializeComponent() {
-
-		timer = CanvasEx.findAvailableTimer();
-		CanvasEx.startTimer(timer, this, 10000);
+		this.timer = CanvasEx.findAvailableTimer();
+		CanvasEx.startTimer(this.timer, this, 10000);
 	}
 
 	protected void deinitializeComponent() {
-
-		CanvasEx.closeTimer(timer);
+		CanvasEx.closeTimer(this.timer);
 	}
 
-	public void setTitle(String aText) {
-
-		title = aText;
-		this.repaint(Reason.UPDATE);
+	public void setTitle(Component aTitle) {
+		removeAll();
+		addComponent(aTitle);
+		aTitle.setBounds(this.x, this.y, this.width, this.height);
+		aTitle.layout();
+		aTitle.setVisible(true);
+		repaint(10);
 	}
 
 	public void repaint(int aReason) {
-
-		if (aReason == Reason.UPDATE) {
-
+		if (aReason == 10) {
 			Window win = getWindow();
 			if (win != null) {
-
-				StringBuffer sb = new StringBuffer(title);
+				StringBuffer sb = new StringBuffer(this.title);
 
 				sb.append(" - [");
 				sb.append(win.getCurrentViewIndex() + 1);
@@ -76,7 +55,7 @@ public class TitleBar extends Component {
 				sb.append(CanvasEx.getTotalFrames());
 				sb.append("]");
 
-				showTitle = sb.toString();
+				this.showTitle = sb.toString();
 			}
 		}
 
@@ -84,63 +63,50 @@ public class TitleBar extends Component {
 	}
 
 	protected void paintContent(GraphicsEx aG) {
-
-		aG.setFont(getFont());
-		aG.setColor(/* this.getForeground() */Color.ALICEBLUE);
-		aG.drawString(showTitle, x + 10, y + height / 2
-			+ aG.getFont().getHeight() / 2, GraphicsEx.LEFT | GraphicsEx.BOTTOM);
+		super.paintContent(aG);
 	}
 
 	protected void paintBackground(GraphicsEx aG) {
-
-		if (hasFocus()) {
-			aG.setBrush(Brush.createColorBrush(Color.LIGHTBLUE));
-		} else {
-			aG.setBrush(Brush.createColorBrush(Color.SKYBLUE));	
+		if (hasFocus())
+			aG.setBrush(Brush.createColorBrush(-5383962));
+		else {
+			aG.setBrush(Brush.createColorBrush(-7876885));
 		}
-		aG.fillRectEx(x, y, width, height);
+		aG.fillRectEx(this.x, this.y, this.width, this.height);
 	}
 
 	public void keyPressed(Event aKeyEv) {
-
-		if (aKeyEv.isNavigationKey() && aKeyEv.getGameAction() != Canvas.DOWN) {
-
+		if ((aKeyEv.isNavigationKey()) && (aKeyEv.getGameAction() != 6)) {
 			Window win = getWindow();
-			if (aKeyEv.getGameAction() == Canvas.LEFT) {
+			if (aKeyEv.getGameAction() == 2)
 				win.switchPreviousView(true);
-			} else if (aKeyEv.getGameAction() == Canvas.RIGHT) {
+			else if (aKeyEv.getGameAction() == 5) {
 				win.switchNextView(true);
 			}
-			
+
 			aKeyEv.accept();
 		}
 	}
 
 	public void keyReleased(Event aKeyEv) {
-
-		if (aKeyEv.isNavigationKey() && aKeyEv.getGameAction() != Canvas.DOWN) {
+		if ((aKeyEv.isNavigationKey()) && (aKeyEv.getGameAction() != 6))
 			aKeyEv.accept();
-		}
 	}
 
 	public void pointerLongPressed(Event aPtEv) {
-
 		super.pointerLongPressed(aPtEv);
 	}
 
 	public void pointerPressed(Event aPtEv) {
-
 		super.pointerPressed(aPtEv);
 	}
 
 	public void pointerReleased(Event aPtEv) {
-
 		super.pointerReleased(aPtEv);
 	}
 
 	public void timerEvent(Event aTimerEv) {
-
-		this.repaint(Reason.UPDATE);
-		CanvasEx.startTimer(timer, this, 10000);
+		repaint(10);
+		CanvasEx.startTimer(this.timer, this, 10000);
 	}
 }

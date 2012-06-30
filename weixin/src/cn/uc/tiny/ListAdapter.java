@@ -24,7 +24,7 @@ public interface ListAdapter extends EventHandler {
 
 	public int getCount();
 
-	public int getItemCommonHeight();
+	public int getItemCommonHeight(int aIdx);
 
 	public Object getItem(int aIdx);
 

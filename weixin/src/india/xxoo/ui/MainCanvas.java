@@ -73,7 +73,7 @@ public class MainCanvas extends Canvas implements Runnable{
 		}
 		iPageBar = createChartPageBar(0,sBarHeight,getWidth(),getHeight() - sBarHeight * 3);
 		if(iInputBar == null){
-			iInputBar = new InputBar(0,getHeight() - sBarHeight * 2,getWidth(),sBarHeight);
+//			iInputBar = new InputBar(0,getHeight() - sBarHeight * 2,getWidth(),sBarHeight);
 		}
 		if(iBottomBar == null){
 			iBottomBar = new BottomBar(0,getHeight() - sBarHeight,getWidth(),sBarHeight);

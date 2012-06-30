@@ -1,14 +1,5 @@
-/**
- * Tiny.cn.uc.demo.ContainerDemo.java, 2011-4-12
- *
- * Copyright (c) 2010, 2011 UC Mobile, All rights reserved.
- */
 package cn.uc.demo;
 
-import javax.microedition.midlet.MIDlet;
-import javax.microedition.midlet.MIDletStateChangeException;
-
-import cn.uc.T;
 import cn.uc.demo.components.Button;
 import cn.uc.demo.components.GridContainer;
 import cn.uc.demo.components.SimpleWindow;
@@ -17,226 +8,208 @@ import cn.uc.tiny.Menu;
 import cn.uc.tiny.MenuSource;
 import cn.uc.tiny.Popup;
 import cn.uc.tiny.Resource;
-import cn.uc.tiny.animations.Animation;
-import cn.uc.tiny.animations.Motion;
+import cn.uc.tiny.Window;
 import cn.uc.tiny.ex.Brush;
 import cn.uc.tiny.ex.CanvasEx;
-import cn.uc.tiny.ex.Color;
 import cn.uc.tiny.ex.CommandEx;
 import cn.uc.tiny.ex.Event;
 import cn.uc.tiny.ex.EventHandler;
 import cn.uc.tiny.ex.FontEx;
-import cn.uc.tiny.ex.GraphicsEx;
 import cn.uc.util.debug.Log;
+import javax.microedition.midlet.MIDlet;
+import javax.microedition.midlet.MIDletStateChangeException;
 
-/**
- * Demo of Container.
- * 
- * @author <a href="mailto:yixx@ucweb.com">Roger Yi</a>
- * @since 1.0
- * @version 1.0
- */
-public class ContainerDemo extends MIDlet implements EventHandler, MenuSource {
+public class ContainerDemo extends MIDlet
+  implements EventHandler, MenuSource
+{
+  private boolean startup = false;
 
-	private boolean startup = false;
+  private int viewcolor = -984833;
+  private int viewalpha = 128;
 
-	private int viewcolor = Color.ALICEBLUE;
-	private int viewalpha = Color.HALF_TRANSPARENT;
+  private int color = -1286;
+  private int bgcolor = -16181;
+  private int alpha = 255;
 
-	private int color = Color.SNOW;
-	private int bgcolor = Color.PINK;
-	private int alpha = Color.OPAQUE;
+  protected void destroyApp(boolean aArg0)
+    throws MIDletStateChangeException
+  {
+  }
 
-	/**
-	 * 
-	 */
-	public ContainerDemo() {
+  protected void pauseApp()
+  {
+  }
 
-	}
+  protected void startApp()
+    throws MIDletStateChangeException
+  {
+    if (this.startup) {
+      CanvasEx.restoreCanvas();
+      return;
+    }
 
-	/** {@inheritDoc} */
-	protected void destroyApp(boolean aArg0) throws MIDletStateChangeException {
-	}
+    this.startup = true;
 
-	/** {@inheritDoc} */
-	protected void pauseApp() {
-	}
+    Log.addTagFilter("Paint");
 
-	/** {@inheritDoc} */
-	protected void startApp() throws MIDletStateChangeException {
+    Log.addTagFilter("Timer");
+    Log.addTagFilter("PntCmp");
+    Log.addTagFilter("PntScl");
+    Log.addTagFilter("DRAW");
+    Log.addTagFilter("ANIMATION");
+    Log.addTagFilter("MOTION");
 
-		if (startup) {
-			CanvasEx.restoreCanvas();
-			return;
-		}
+    CanvasEx.initCanvas(this);
+    FontEx.initializeUsedFonts(185);
+    FontEx.setDefaultFont(FontEx.getFont(0, 
+      0));
 
-		startup = true;
+    SimpleWindow win = new SimpleWindow();
+    GridContainer grid = new GridContainer();
+    grid.setBackground(Brush.createColorBrush(this.viewalpha, this.viewcolor));
 
-		Log.addTagFilter(CanvasEx.P_TAG);
-		// Log.addTagFilter(CanvasEx.E_TAG);
-		Log.addTagFilter(CanvasEx.T_TAG);
-		Log.addTagFilter(Component.P_TAG);
-		Log.addTagFilter(Component.S_TAG);
-		Log.addTagFilter(GraphicsEx.TAG);
-		Log.addTagFilter(Animation.TAG);
-		Log.addTagFilter(Motion.TAG);
+    for (int i = 0; i < 24; i++)
+    {
+      int row = i / 2 + 1;
+      int col = i % 2 + 1;
 
-		CanvasEx.initCanvas(this);
-		FontEx.initializeUsedFonts(FontEx.SUPPORT_NORMAL_FONTS);
-		FontEx.setDefaultFont(FontEx.getFont(FontEx.STYLE_PLAIN,
-			FontEx.SIZE_MEDIUM));
+      Button button = new Button();
+      button.setText("Button (" + row + ", " + col + ")");
+      button.setTextColor(this.color);
+      button.setIcon(Resource.getImage(6, false));
+      button.setBackground(Brush.createColorBrush(this.alpha, this.bgcolor));
+      button.setActionTarget(this);
+      grid.addComponent(button);
+    }
+    win.addView(grid);
 
-		SimpleWindow win = new SimpleWindow();
-		GridContainer grid = new GridContainer();
-		grid.setBackground(Brush.createColorBrush(viewalpha, viewcolor));
+    grid = new GridContainer();
+    grid.setBackground(Brush.createColorBrush(this.viewalpha, this.viewcolor));
 
-		for (int i = 0; i < 24; ++i) {
+    for (int i = 0; i < 12; i++)
+    {
+      int row = i / 2 + 1;
+      int col = i % 2 + 1;
 
-			int row = i / GridContainer.COL + 1;
-			int col = i % GridContainer.COL + 1;
+      GridContainer g = new GridContainer();
+      g.setHasBackground(false);
 
-			Button button = new Button();
-			button.setText("Button (" + row + ", " + col + ")");
-			button.setTextColor(color);
-			button.setIcon(Resource.getImage(Resource.ICON_RIGHT_ARROW, false));
-			button.setBackground(Brush.createColorBrush(alpha, bgcolor));
-			button.setActionTarget(this);
-			grid.addComponent(button);
-		}
-		win.addView(grid);
-		
-		grid = new GridContainer();
-		grid.setBackground(Brush.createColorBrush(viewalpha, viewcolor));
+      for (int j = 0; j < 12; j++)
+      {
+        row = j / 2 + 1;
+        col = j % 2 + 1;
 
-		for (int i = 0; i < 12; ++i) {
+        Button button = new Button();
+        button.setText(row + "," + col);
+        button.setTextColor(this.color);
+        button.setIcon(Resource.getImage(6, 
+          false));
+        button.setBackground(Brush.createColorBrush(this.alpha, this.bgcolor));
+        button.setActionTarget(this);
 
-			int row = i / GridContainer.COL + 1;
-			int col = i % GridContainer.COL + 1;
+        g.addComponent(button);
+      }
+      grid.addComponent(g);
+    }
+    win.addView(grid);
 
-			GridContainer g = new GridContainer();
-			g.setHasBackground(false);
+    win.setMenuSource(this);
+    win.setTitle("Container");
+    win.show();
+  }
 
-			for (int j = 0; j < 12; ++j) {
+  public Menu getWindowMenu()
+  {
+    Menu menu = Menu.buildWindowMenu(CommandEx.create(345), 
+      CommandEx.create(332));
+    menu.setOwner(this);
+    return menu;
+  }
 
-				row = j / GridContainer.COL + 1;
-				col = j % GridContainer.COL + 1;
+  public Menu getContextMenu(Component aContextCmp, int aX, int aY)
+  {
+    return null;
+  }
 
-				Button button = new Button();
-				button.setText("" + row + "," + col);
-				button.setTextColor(color);
-				button.setIcon(Resource.getImage(Resource.ICON_RIGHT_ARROW,
-					false));
-				button.setBackground(Brush.createColorBrush(alpha, bgcolor));
-				button.setActionTarget(this);
+  public Menu getSubMenu(CommandEx aGroup)
+  {
+    return null;
+  }
 
-				g.addComponent(button);
-			}
-			grid.addComponent(g);
-		}
-		win.addView(grid);
-		
-		win.setMenuSource(this);
-		win.setTitle("Container");
-		win.show();
-		return;
-	}
+  public boolean event(Event aEv)
+  {
+    if (aEv.isCommandAction()) {
+      switch (aEv.getCommandId())
+      {
+      case 332:
+        CanvasEx.exit();
+        break;
+      case 345:
+        CanvasEx.getCurrWindow().switchNextView(true);
+      }
 
-	/** {@inheritDoc} */
-	public Menu getWindowMenu() {
+      return true;
+    }if (aEv.isComponentAction())
+    {
+      Popup.gToastEndAnchor = 131;
+      Button button = (Button)aEv.getActionComponent();
+      Popup toast = Popup.buildToast(button.getText() + 
+        " has been clicked.");
+      toast.show();
+    }
 
-		Menu menu = Menu.buildWindowMenu(CommandEx.create(T.MENU_SWITCH_RIGHT),
-			CommandEx.create(T.MENU_EXIT));
-		menu.setOwner(this);
-		return menu;
-	}
+    return false;
+  }
 
-	/** {@inheritDoc} */
-	public Menu getContextMenu(Component aContextCmp, int aX, int aY) {
-		return null;
-	}
+  public void keyEvent(Event aKeyEv)
+  {
+  }
 
-	/** {@inheritDoc} */
-	public Menu getSubMenu(CommandEx aGroup) {
-		return null;
-	}
+  public void pointerEvent(Event aPtEv)
+  {
+  }
 
-	/** {@inheritDoc} */
-	public boolean event(Event aEv) {
+  public void actionEvent(Event aActEv)
+  {
+  }
 
-		if (aEv.isCommandAction()) {
-			switch (aEv.getCommandId()) {
+  public void timerEvent(Event aTimerEv)
+  {
+  }
 
-			case T.MENU_EXIT:
-				CanvasEx.exit();
-				break;
-				
-			case T.MENU_SWITCH_RIGHT:
-				CanvasEx.getCurrWindow().switchNextView(true);
-				break;
-			}
-			return true;
-		} else if (aEv.isComponentAction()) {
+  public void progressEvent(Event aProgressEv)
+  {
+  }
 
-			Popup.gToastEndAnchor = GraphicsEx.CENTER | GraphicsEx.IN_BOX;
-			Button button = (Button) aEv.getActionComponent();
-			Popup toast = Popup.buildToast(button.getText()
-				+ " has been clicked.");
-			toast.show();
-		}
+  public void errorEvent(Event aErrorEv)
+  {
+  }
 
-		return false;
-	}
+  public void sizeChanged(int aNewWidth, int aNewHeight)
+  {
+  }
 
-	/** {@inheritDoc} */
-	public void keyEvent(Event aKeyEv) {
-	}
+  public void orentationChanged(int aNewOrentation)
+  {
+  }
 
-	/** {@inheritDoc} */
-	public void pointerEvent(Event aPtEv) {
-	}
+  public void showNotify()
+  {
+  }
 
-	/** {@inheritDoc} */
-	public void actionEvent(Event aActEv) {
-	}
+  public void hideNotify()
+  {
+  }
 
-	/** {@inheritDoc} */
-	public void timerEvent(Event aTimerEv) {
-	}
+  public void focusGained(Event aCauseEv)
+  {
+  }
 
-	/** {@inheritDoc} */
-	public void progressEvent(Event aProgressEv) {
-	}
+  public void focusLost(Event aCauseEv)
+  {
+  }
 
-	/** {@inheritDoc} */
-	public void errorEvent(Event aErrorEv) {
-	}
-
-	/** {@inheritDoc} */
-	public void sizeChanged(int aNewWidth, int aNewHeight) {
-	}
-
-	/** {@inheritDoc} */
-	public void orentationChanged(int aNewOrentation) {
-	}
-
-	/** {@inheritDoc} */
-	public void showNotify() {
-	}
-
-	/** {@inheritDoc} */
-	public void hideNotify() {
-	}
-
-	/** {@inheritDoc} */
-	public void focusGained(Event aCauseEv) {
-	}
-
-	/** {@inheritDoc} */
-	public void focusLost(Event aCauseEv) {
-	}
-
-	/** {@inheritDoc} */
-	public void onEventError(Throwable aErr) {
-	}
-
+  public void onEventError(Throwable aErr)
+  {
+  }
 }

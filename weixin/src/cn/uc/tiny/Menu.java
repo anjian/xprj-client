@@ -465,7 +465,7 @@ public final class Menu extends Popup implements ListAdapter {
 		}
 	}
 
-	public int getItemCommonHeight() {
+	public int getItemCommonHeight(int aIdx) {
 
 		return font.getHeight() + getLineSpacing();
 	}
@@ -589,6 +589,7 @@ public final class Menu extends Popup implements ListAdapter {
 		int dotW = font.charWidth('.');
 
 		int preferredW = 0;
+		int preferredH = 0;
 
 		for (int i = 0, w = 0; i < commands.length; ++i) {
 
@@ -601,15 +602,13 @@ public final class Menu extends Popup implements ListAdapter {
 			}
 
 			preferredW = Math.max(preferredW, w);
+			preferredH += getItemCommonHeight(i);
 		}
 
 		preferredW += getLeftMargin() + getRightMargin();
+		preferredH += + getTopMargin() + getBottomMargin();
 
 		Rectangle box = getBoxRegion();
-
-		int preferredH = commands.length * getItemCommonHeight()
-			+ getTopMargin() + getBottomMargin();
-
 		preferredH = Math.min(preferredH, box.height);
 
 		// handle context menu's position problems

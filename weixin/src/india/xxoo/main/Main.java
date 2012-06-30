@@ -1,5 +1,6 @@
 package india.xxoo.main;
 import india.xxoo.ui.MainCanvas;
+import india.xxoo.ui.UIManager;
 
 import javax.microedition.lcdui.Display;
 import javax.microedition.midlet.MIDlet;
@@ -13,8 +14,7 @@ public class Main extends MIDlet {
 	public static MainCanvas iMainCanvas;
 	
 	public Main() {
-		iMain = this;
-		iMainCanvas = new MainCanvas();
+		
 	}
 
 	protected void destroyApp(boolean arg0) throws MIDletStateChangeException {
@@ -28,8 +28,8 @@ public class Main extends MIDlet {
 	}
 
 	protected void startApp() throws MIDletStateChangeException {
-		iMainCanvas.init();
-		Display.getDisplay(this).setCurrent(iMainCanvas);
+		 UIManager c = new UIManager(this);
+		 c.displayChartList();
 	}
 
 }

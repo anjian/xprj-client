@@ -461,8 +461,9 @@ public final class ListView extends Component {
 
 		int idx = 0;
 		int yoffset = 0;
-		int height = adapter != null ? adapter.getItemCommonHeight() : 0;
+		int height = 0;
 		for (; idx < count; ++idx) {
+			height = adapter != null ? adapter.getItemCommonHeight(idx) : 0;
 			yoffsets[idx] = yoffset;
 			yoffset += height;
 		}

@@ -1,238 +1,161 @@
-/**
- * Tiny.cn.uc.ui.Window.java, 2010-11-19
- * 
- * Copyright (c) 2010, 2011 UC Mobile, All rights reserved.
- */
 package cn.uc.tiny;
 
-import java.util.Vector;
-
-import javax.microedition.lcdui.Image;
-
-import cn.uc.tiny.Menu.MenuType;
 import cn.uc.tiny.animations.Animation;
+import cn.uc.tiny.ex.BasicEventHandler;
 import cn.uc.tiny.ex.Brush;
 import cn.uc.tiny.ex.CanvasEx;
 import cn.uc.tiny.ex.CommandEx;
 import cn.uc.tiny.ex.Event;
-import cn.uc.tiny.ex.Event.EventType;
 import cn.uc.tiny.ex.FontEx;
 import cn.uc.tiny.ex.GraphicsEx;
-import cn.uc.tiny.ex.Color;
 import cn.uc.tiny.geom.Rectangle;
 import cn.uc.util.BitUtils;
-import cn.uc.util.StringUtils;
 import cn.uc.util.debug.Assert;
 import cn.uc.util.debug.Log;
+import java.util.Vector;
+import javax.microedition.lcdui.Image;
 
-/**
- * 
- * @author <a href="mailto:yixx@ucweb.com">Roger Yi</a>
- * @since 1.0
- * @version 1.0
- */
 public class Window extends Component {
-
 	public static final String TAG = "Win";
-	public static final boolean DEBUG = Component.DEBUG;
-
+	public static final boolean DEBUG = false;
 	public static final int SHOW_UPON_PREVIOUS = 0;
 	public static final int SHOW_AND_CLOSE_PREVIOUS = 1;
-
 	public static final int HIDE_MENUBAR = 1;
 	public static final int MINIMIZE_TITLEBAR = 2;
 	public static final int HIDE_TITLEBAR = 4;
-
 	public static final int NORMAL_SCREEN = 0;
-	public static final int FULL_SCREEN = MINIMIZE_TITLEBAR | HIDE_MENUBAR;
-
+	public static final int FULL_SCREEN = 3;
 	private static final int MINIMIZE_TITLEBAR_HEIGHT = 8;
-
 	private static final boolean SWITCH_NEXT = true;
 	private static final boolean SWITCH_PREVIOUS = false;
-
 	private static final String VIEW_PANE = "ViewPane";
 	private static final String MODAL_LAYER = "ModalLayer";
 	private static final String MENU_LAYER = "MenuLayer";
 	private static final String FLOAT_LAYER = "FloatLayer";
-
-	// splash relative
 	private static int gProgressSegments = 5;
 	private static int gProgress = 0;
-	private static String gProgressMessage = StringUtils.EMPTY;
+	private static String gProgressMessage = "";
 
-	private static int gShowWindowHint = SHOW_UPON_PREVIOUS;
-
-	private final TitleBar titleBar;
+	private static int gShowWindowHint = 0;
+	public final TitleBar titleBar;
 	private final MenuBar menuBar;
 	private MenuSource menuSrc;
-
 	private final Component viewPane;
 	private final Component modalLayer;
 	private final Component menuLayer;
 	private final Component floatLayer;
-
 	private Component currView;
 	private Component dragged;
 	private Component pressed;
 	private Component focused;
 	private Component oldFocused;
-
-	/**
-	 * Contains a list of components that would like to animate their state
-	 */
 	private final Vector animatables = new Vector();
 
-	private int screen = NORMAL_SCREEN;
+	private int screen = 0;
 
 	private Rectangle centralBounds = Rectangle.EMPTY;
 	private Rectangle viewBounds = Rectangle.EMPTY;
 	private Rectangle popupBounds = Rectangle.EMPTY;
-
 	private Image[] logos;
 
-	/**
-	 * Create a splash window for startup display.
-	 * 
-	 * @return splash window
-	 */
 	public static Window createSplash(Image aStartupLogo, Image aVersionLogo,
-		Image aProgressOnIcon, Image aProgressOffIcon) {
-
+			Image aProgressOnIcon, Image aProgressOffIcon) {
 		Window splash = new Window("Splash", new TitleBar(), new MenuBar());
 
-		splash.setAttr(Attr.SPLASH, true);
+		splash.setAttr(0, true);
 		splash.logos = new Image[] { aStartupLogo, aVersionLogo,
-			aProgressOnIcon, aProgressOffIcon };
+				aProgressOnIcon, aProgressOffIcon };
 
-		splash.titleBar.setAttr(Attr.HAS_BACKGROUND, false);
-		splash.menuBar.setAttr(Attr.HAS_BACKGROUND, false);
+		splash.titleBar.setAttr(10, false);
+		splash.menuBar.setAttr(10, false);
 
 		return splash;
 	}
 
 	private static Component createPopupLayer(String aId) {
-
 		Component c = new Component();
 
 		c.setId(aId);
-		c.setAttr(Attr.HAS_BACKGROUND, false);
-		c.setAttr(Attr.OPAQUE, false);
-		c.setAttr(Attr.CHILDREN_OVERLAP, true);
-		c.setAttr(Attr.POPUP_LAYER, true);
+		c.setAttr(10, false);
+		c.setAttr(11, false);
+		c.setAttr(13, true);
+		c.setAttr(1, true);
 
-		if (aId == FLOAT_LAYER) {
-			c.setAttr(Attr.TRANSPARENT_FOR_POINTER_EVENT, true);
+		if (aId == "FloatLayer") {
+			c.setAttr(25, true);
 		}
 
 		return c;
 	}
 
 	public Window(String aId, TitleBar aTitleBar, MenuBar aMenuBar) {
-
 		setId(aId);
-		setState(State.VISIBLE, false);
+		setState(1, false);
 
-		titleBar = aTitleBar;
-		menuBar = aMenuBar;
+		this.titleBar = aTitleBar;
+		this.menuBar = aMenuBar;
 
-		viewPane = new Component();
-		viewPane.setId(VIEW_PANE);
-		viewPane.setAttr(Attr.HAS_BACKGROUND, false);
-		viewPane.setAttr(Attr.OPAQUE, false);
+		this.viewPane = new Component();
+		this.viewPane.setId("ViewPane");
+		this.viewPane.setAttr(10, false);
+		this.viewPane.setAttr(11, false);
 
-		modalLayer = createPopupLayer(MODAL_LAYER);
-		menuLayer = createPopupLayer(MENU_LAYER);
-		floatLayer = createPopupLayer(FLOAT_LAYER);
+		this.modalLayer = createPopupLayer("ModalLayer");
+		this.menuLayer = createPopupLayer("MenuLayer");
+		this.floatLayer = createPopupLayer("FloatLayer");
 
-		this.addComponent(titleBar);
-		this.addComponent(menuBar);
-		this.addComponent(viewPane);
-		this.addComponent(modalLayer);
-		this.addComponent(menuLayer);
-		this.addComponent(floatLayer);
+		addComponent(this.titleBar);
+		addComponent(this.menuBar);
+		addComponent(this.viewPane);
+		addComponent(this.modalLayer);
+		addComponent(this.menuLayer);
+		addComponent(this.floatLayer);
 
-		// layout
 		layout();
 	}
 
-	/** {@inheritDoc} */
 	public String getClazz() {
-
-		return hasAttr(Attr.SPLASH) ? "Splash" : "Window";
+		return hasAttr(0) ? "Splash" : "Window";
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	public final Window getWindow() {
-
 		return this;
 	}
 
-	/** {@inheritDoc} */
 	protected void initializeComponent() {
-
-		// make visible and initialize focused
 		setVisible(true);
 		initFocused();
-		// reset window menu when is not splash
-		if (menuBar.getMenu() == null) {
+
+		if (this.menuBar.getMenu() == null)
 			resetWindowMenu();
-		}
 	}
 
-	/** {@inheritDoc} */
 	protected void deinitializeComponent() {
-
 		setVisible(false);
 
-		if (hasAttr(Attr.SPLASH)) {
+		if (hasAttr(0)) {
+			Log.d("Win", "Clear data of splash.");
 
-			Log.d(TAG, "Clear data of splash.");
-
-			gProgressMessage = StringUtils.EMPTY;
+			gProgressMessage = "";
 			gProgress = 0;
 		}
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	public boolean isChildrenOverlap() {
-
-		return modalLayer.isVisible() || menuLayer.isVisible()
-			|| floatLayer.isVisible();
-	}
-
-	/** {@inheritDoc} */
-	public void setTitle(String aTitle) {
-
-		titleBar.setTitle(aTitle);
-	}
-
-	/** {@inheritDoc} */
-	public String getTitle() {
-
-		return titleBar.getTitle();
+		return (this.modalLayer.isVisible()) || (this.menuLayer.isVisible())
+				|| (this.floatLayer.isVisible());
 	}
 
 	public final void show() {
-
-		this.show(SHOW_UPON_PREVIOUS);
+		show(0);
 	}
 
 	public final void show(int aShowHint) {
-
 		gShowWindowHint = aShowHint;
 
 		Window oldWin = CanvasEx.getCurrWindow();
 
-		// make the switch from old to new
 		if (oldWin != null) {
-
-			// create a special container to contains two windows to show
-			// windows transition animation
 			Component winContainer = new Component();
 			winContainer.initialize();
 			winContainer.setBounds(CanvasEx.getDisplayBounds());
@@ -242,21 +165,16 @@ public class Window extends Component {
 
 			int disHeight = CanvasEx.getDisplayHeight();
 			winContainer.replaceWithTransition(oldWin, this, 0, -disHeight, 0,
-				disHeight, 0, 0);
+					disHeight, 0, 0);
 		}
 
-		switchWindow(oldWin, this, gShowWindowHint == SHOW_AND_CLOSE_PREVIOUS);
+		switchWindow(oldWin, this, gShowWindowHint == 1);
 	}
 
 	public final void close() {
-
 		Window prevWin = CanvasEx.getPrevWindow();
 
-		// make the switch from current to previous
 		if (prevWin != null) {
-
-			// create a special container to contains two windows to show
-			// windows transition animation
 			Component winContainer = new Component();
 			winContainer.initialize();
 			winContainer.setBounds(CanvasEx.getDisplayBounds());
@@ -266,7 +184,7 @@ public class Window extends Component {
 
 			int disHeight = CanvasEx.getDisplayHeight();
 			winContainer.replaceWithTransition(this, prevWin, 0, disHeight, 0,
-				-disHeight, 0, 0);
+					-disHeight, 0, 0);
 
 			switchWindow(this, prevWin, true);
 		} else {
@@ -275,909 +193,683 @@ public class Window extends Component {
 	}
 
 	void switchWindow(Window aOldWin, Window aNewWin, boolean aCloseOld) {
-
-		// remove the special windows container when transition animation over
 		if (getParent() != null) {
-
 			Component winContainer = getParent();
 			winContainer.setVisible(false);
 			winContainer.removeAll();
 		}
 
 		if (CanvasEx.compareOrder(aNewWin, aOldWin) > 0) {
-			// show new then close old
 			if (aNewWin != null) {
 				aNewWin.showImpl();
 			}
 
-			if (aOldWin != null && aCloseOld) {
+			if ((aOldWin != null) && (aCloseOld))
 				aOldWin.closeImpl();
-			}
 		} else {
-			// close old then show new
-			if (aOldWin != null && aCloseOld) {
+			if ((aOldWin != null) && (aCloseOld)) {
 				aOldWin.closeImpl();
 			}
 
-			if (aNewWin != null) {
+			if (aNewWin != null)
 				aNewWin.showImpl();
-			}
 		}
 	}
 
 	private final void showImpl() {
-
-		Log.d(TAG, "Show window with hint : ", Log.toString(gShowWindowHint),
-			", ", this);
+		Log.d("Win", "Show window with hint : ", Log.toString(gShowWindowHint),
+				", ", this);
 		initialize();
 		CanvasEx.showWindow(this);
 	}
 
 	private final void closeImpl() {
-
-		Log.d(TAG, "Close window : ", this);
+		Log.d("Win", "Close window : ", this);
 		deinitialize();
 		CanvasEx.closeWindow(this);
 	}
 
 	public Brush getBackground(Component aCmp, int aBackgroundId) {
-
 		return Brush.WHITE_BRUSH;
 	}
 
 	public int getForeground(Component aCmp, int aForegroundId) {
-
-		return Color.BLACK;
+		return -16777216;
 	}
 
 	public FontEx getFont(Component aCmp) {
-
 		return FontEx.getDefaultFont();
 	}
 
 	public Menu getWindowMenu() {
-
 		Menu menu = null;
 
 		if (hasModal()) {
 			menu = getTopModal().getWindowMenu();
 		}
 
-		if (menu == null && currView != null) {
-			menu = currView.getWindowMenu();
+		if ((menu == null) && (this.currView != null)) {
+			menu = this.currView.getWindowMenu();
 		}
 
-		if (menu == null && menuSrc != null) {
-			menu = menuSrc.getWindowMenu();
+		if ((menu == null) && (this.menuSrc != null)) {
+			menu = this.menuSrc.getWindowMenu();
 		}
 
 		return menu;
 	}
 
 	public Menu getContextMenu(Component aContextCmp, int aX, int aY) {
-
-		if (menuSrc != null) {
-			return menuSrc.getContextMenu(aContextCmp, aX, aY);
-		} else {
-			return null;
+		if (this.menuSrc != null) {
+			return this.menuSrc.getContextMenu(aContextCmp, aX, aY);
 		}
+		return null;
 	}
 
 	public Menu getSubMenu(CommandEx aGroup) {
-
-		if (menuSrc != null) {
-			return menuSrc.getSubMenu(aGroup);
-		} else {
-			return null;
+		if (this.menuSrc != null) {
+			return this.menuSrc.getSubMenu(aGroup);
 		}
+		return null;
 	}
 
 	public void layout() {
-
 		Rectangle bounds = CanvasEx.getDisplayBounds();
 		setBounds(bounds);
 
-		FontEx font = this.getFont();
+		FontEx font = getFont();
 
-		int tbHeight = BitUtils.and(screen, MINIMIZE_TITLEBAR) ? MINIMIZE_TITLEBAR_HEIGHT
-			: BitUtils.and(screen, HIDE_TITLEBAR) ? 0 : font.getHeight();
-		int mbHeight = BitUtils.and(screen, HIDE_MENUBAR) ? 0
-			: font.getHeight();
+		int tbHeight = BitUtils.and(this.screen, 4) ? 0 : BitUtils.and(
+				this.screen, 2) ? 8 : font.getHeight();
+		int mbHeight = BitUtils.and(this.screen, 1) ? 0 : font.getHeight();
 
-		// titlebar and menubar
-		titleBar.setBounds(0, 0, bounds.width, tbHeight);
-		menuBar.setBounds(0, bounds.height - mbHeight, bounds.width, mbHeight);
+		this.titleBar.setBounds(0, 0, bounds.width, tbHeight);
+		this.menuBar.setBounds(0, bounds.height - mbHeight, bounds.width,
+				mbHeight);
 
-		// view pane
-		centralBounds = new Rectangle(0, tbHeight, bounds.width, bounds.height
-			- tbHeight - mbHeight);
+		this.centralBounds = new Rectangle(0, tbHeight, bounds.width,
+				bounds.height - tbHeight - mbHeight);
 
-		viewPane.setBounds(centralBounds);
-		viewBounds = new Rectangle(0, 0, bounds.width, centralBounds.height);
+		this.viewPane.setBounds(this.centralBounds);
+		this.viewBounds = new Rectangle(0, 0, bounds.width,
+				this.centralBounds.height);
 
 		for (int i = getViewCount(); i-- != 0;) {
-			getView(i).setBounds(viewBounds);
+			getView(i).setBounds(this.viewBounds);
 		}
 
-		// relayout all views
-		viewPane.layout();
+		this.viewPane.layout();
 
-		// popup layers
-		popupBounds = new Rectangle(0, 0, bounds.width, bounds.height
-			- mbHeight);
+		this.popupBounds = new Rectangle(0, 0, bounds.width, bounds.height
+				- mbHeight);
 
-		modalLayer.setBounds(popupBounds);
-		menuLayer.setBounds(popupBounds);
-		floatLayer.setBounds(popupBounds);
+		this.modalLayer.setBounds(this.popupBounds);
+		this.menuLayer.setBounds(this.popupBounds);
+		this.floatLayer.setBounds(this.popupBounds);
 	}
 
 	public final void switchFullScreen() {
-
-		screen = isFullScreen() ? NORMAL_SCREEN : FULL_SCREEN;
+		this.screen = (isFullScreen() ? 0 : 3);
 		layout();
 	}
 
 	public final void setFullScreen(int aScreenHint) {
-
-		screen = aScreenHint;
+		this.screen = aScreenHint;
 		layout();
 	}
 
 	public final int getFullScreen() {
-
-		return screen;
+		return this.screen;
 	}
 
 	public final boolean isFullScreen() {
-
-		return screen == FULL_SCREEN;
+		return this.screen == 3;
 	}
 
 	public final Rectangle getCentralArea() {
-
-		return centralBounds;
+		return this.centralBounds;
 	}
 
 	public final Rectangle getPopupArea() {
-
-		return popupBounds;
+		return this.popupBounds;
 	}
 
 	public final boolean isCurrentView(Component aView) {
-
-		return currView == aView;
+		return this.currView == aView;
 	}
 
 	public final Component getCurrentView() {
-
-		return currView;
+		return this.currView;
 	}
 
 	public final int getCurrentViewIndex() {
-
-		return getViewIndex(currView);
+		return getViewIndex(this.currView);
 	}
 
 	public final int getViewCount() {
-
-		return viewPane.getComponentCount();
+		return this.viewPane.getComponentCount();
 	}
 
 	public final int getViewIndex(Component aView) {
-
-		return viewPane.getComponentIndex(aView);
+		return this.viewPane.getComponentIndex(aView);
 	}
 
 	public final Component getView(int aViewIdx) {
-
 		if (isViewIndexValid(aViewIdx)) {
-			return viewPane.getComponentAt(aViewIdx);
+			return this.viewPane.getComponentAt(aViewIdx);
 		}
 
-		return currView;
+		return this.currView;
 	}
 
 	public final boolean isViewIndexValid(int aViewIdx) {
-
-		return viewPane.isComponentIndexValid(aViewIdx);
+		return this.viewPane.isComponentIndexValid(aViewIdx);
 	}
 
 	public final void switchNextView(boolean aCircle) {
-
-		switchNextOrPreviousView(SWITCH_NEXT, aCircle);
+		switchNextOrPreviousView(true, aCircle);
 	}
 
 	public final void switchPreviousView(boolean aCircle) {
-
-		switchNextOrPreviousView(SWITCH_PREVIOUS, aCircle);
+		switchNextOrPreviousView(false, aCircle);
 	}
 
 	public final void switchToView(int aViewIdx, boolean aNext) {
-
 		if (!isViewIndexValid(aViewIdx)) {
 			return;
 		}
 
-		Component switchView = viewPane.getComponentAt(aViewIdx);
-		if (currView != switchView) {
-			this.switchView(currView, switchView, aNext);
-		}
+		Component switchView = this.viewPane.getComponentAt(aViewIdx);
+		if (this.currView != switchView)
+			switchView(this.currView, switchView, aNext);
 	}
 
 	public final void addView(Component aView) {
-
-		this.addView(getViewCount(), aView);
+		addView(getViewCount(), aView);
 	}
 
 	public final void addView(int aViewIdx, Component aView) {
+		this.viewPane.addComponent(aViewIdx, aView);
 
-		// add
-		viewPane.addComponent(aViewIdx, aView);
-
-		// set view's bounds and layout it
-		aView.setBounds(viewBounds);
+		aView.setBounds(this.viewBounds);
 		aView.layout();
 		aView.setVisible(false);
 
-		// no visible current view?
-		if (currView == null) {
-			this.switchView(null, aView, SWITCH_NEXT);
+		if (this.currView == null) {
+			switchView(null, aView, true);
 		}
 
-		titleBar.repaint(Reason.UPDATE);
+		this.titleBar.repaint(10);
 	}
 
 	public final void closeView(Component aView) {
-
 		int idx = getViewIndex(aView);
 
-		// remove
-		viewPane.removeComponent(aView);
+		this.viewPane.removeComponent(aView);
 
-		// need switch current?
-		if (currView == aView) {
-
+		if (this.currView == aView) {
 			if (getViewCount() > 0) {
-
-				switchToView(idx, SWITCH_NEXT);
+				switchToView(idx, true);
 			} else {
-
-				this.switchView(currView, null, SWITCH_NEXT);
+				switchView(this.currView, null, true);
 			}
 
 			return;
 		}
 
-		titleBar.repaint(Reason.UPDATE);
-		viewPane.repaint(Reason.CLOSE_VIEW);
+		this.titleBar.repaint(10);
+		this.viewPane.repaint(42);
 	}
 
 	public final void closeAllViews() {
-
-		for (int i = viewPane.getComponentCount(); i-- > 0;) {
-
-			closeView(viewPane.getComponentAt(i));
+		for (int i = this.viewPane.getComponentCount(); i-- > 0;) {
+			closeView(this.viewPane.getComponentAt(i));
 		}
 	}
 
 	private final void switchNextOrPreviousView(boolean aNext, boolean aCircle) {
-
 		int idx = aNext ? getCurrentViewIndex() + 1 : getCurrentViewIndex() - 1;
 
 		if (isViewIndexValid(idx)) {
-
 			switchToView(idx, aNext);
 		} else if (aCircle) {
-
 			idx = aNext ? 0 : getViewCount() - 1;
 			switchToView(idx, aNext);
 		}
 	}
 
 	private final void switchView(Component aOldView, Component aNewView,
-		boolean aNext) {
-
-		if (aOldView != null && aNewView != null && isVisible()) {
-
+			boolean aNext) {
+		if ((aOldView != null) && (aNewView != null) && (isVisible())) {
 			int aOutDstX = aNext ? -aOldView.width : aOldView.width;
 			int aInSrcX = aNext ? aNewView.width : -aNewView.width;
 
-			viewPane.replaceWithTransition(aOldView, aNewView, aOutDstX, 0,
-				aInSrcX, 0, 0, 0);
+			this.viewPane.replaceWithTransition(aOldView, aNewView, aOutDstX,
+					0, aInSrcX, 0, 0, 0);
 		}
 
-		this.switchView(aOldView, aNewView);
+		switchView(aOldView, aNewView);
 	}
 
 	final void switchView(Component aOldView, Component aNewView) {
-
 		if (aOldView != null) {
-
 			aOldView.setVisible(false);
 		}
 
-		currView = aNewView;// switch
+		this.currView = aNewView;
 
 		if (aNewView != null) {
-
-			currView.setVisible(true);
+			this.currView.setVisible(true);
 		}
 
 		if (isVisible()) {
-
-			titleBar.repaint(Reason.UPDATE);
-			viewPane.repaint(Reason.SWITCH_VIEW);
+			this.titleBar.repaint(10);
+			this.viewPane.repaint(41);
 
 			resetWindowMenu();
 		}
 	}
 
 	public boolean isModalPopup(Component aCmp) {
-
-		return modalLayer.contains(aCmp) || menuLayer.contains(aCmp);
+		return (this.modalLayer.contains(aCmp))
+				|| (this.menuLayer.contains(aCmp));
 	}
 
 	void appendPopup(Popup aPopup) {
-
 		Assert.assertNotNull(aPopup);
 
-		if (aPopup.hasAttr(Attr.MODAL)) {
+		if (aPopup.hasAttr(2))
 			appendModal(aPopup);
-		} else if (aPopup.hasAttr(Attr.MENU) && aPopup instanceof Menu) {
+		else if ((aPopup.hasAttr(3)) && ((aPopup instanceof Menu)))
 			appendMenu((Menu) aPopup);
-		} else if (aPopup.hasAttr(Attr.FLOAT)) {
+		else if (aPopup.hasAttr(4))
 			appendFloat(aPopup);
-		}
 	}
 
 	void removePopup(Popup aPopup) {
-
 		if (aPopup == null) {
 			return;
 		}
 
-		if (aPopup.hasAttr(Attr.MODAL)) {
+		if (aPopup.hasAttr(2))
 			removeModal(aPopup);
-		} else if (aPopup.hasAttr(Attr.MENU) && aPopup instanceof Menu) {
+		else if ((aPopup.hasAttr(3)) && ((aPopup instanceof Menu)))
 			removeMenu((Menu) aPopup);
-		} else if (aPopup.hasAttr(Attr.FLOAT)) {
+		else if (aPopup.hasAttr(4))
 			removeFloat(aPopup);
-		}
 	}
 
 	void appendModal(Popup aModal) {
-
 		Assert.assertNotNull(aModal);
 
-		if (!modalLayer.contains(aModal)) {
-
-			modalLayer.addComponent(aModal);
-			this.setCurrentFocused(aModal.findFirstFocusable(), true);
+		if (!this.modalLayer.contains(aModal)) {
+			this.modalLayer.addComponent(aModal);
+			setCurrentFocused(aModal.findFirstFocusable(), true);
 			closeMenus();
 			resetWindowMenu();
 		}
 	}
 
 	void removeModal(Popup aModal) {
-
 		Assert.assertNotNull(aModal);
 
-		if (modalLayer.contains(aModal)) {
-
-			modalLayer.removeComponent(aModal);
+		if (this.modalLayer.contains(aModal)) {
+			this.modalLayer.removeComponent(aModal);
 			initFocused();
 			resetWindowMenu();
 		}
 	}
 
 	public void closeModals() {
-
-		closePopups(modalLayer, null, true);
+		closePopups(this.modalLayer, null, true);
 	}
 
 	public void popoutModals() {
-
-		closePopups(modalLayer, null, false);
+		closePopups(this.modalLayer, null, false);
 	}
 
 	protected Popup getTopModal() {
-
-		return (Popup) modalLayer.getLastComponent();
+		return (Popup) this.modalLayer.getLastComponent();
 	}
 
 	protected boolean hasModal() {
-
-		return modalLayer.getComponentCount() > 0;
+		return this.modalLayer.getComponentCount() > 0;
 	}
 
 	public void setMenuSource(MenuSource aMenuSource) {
-
-		menuSrc = aMenuSource;
+		this.menuSrc = aMenuSource;
 	}
 
 	public void setSplashMenu(Menu aWinMenu) {
-
 		Assert.assertNotNull(aWinMenu);
-		Assert.assertEquals(aWinMenu.type, MenuType.WINDOW_MENU, Assert.ARG);
+		Assert.assertEquals(aWinMenu.type, 0, 0);
 
-		menuBar.setMenu(aWinMenu);
+		this.menuBar.setMenu(aWinMenu);
 	}
 
 	public void resetWindowMenu() {
-
-		menuBar.setMenu(getWindowMenu());
+		this.menuBar.setMenu(getWindowMenu());
 	}
 
 	public void showContextMenu(Menu aContextMenu) {
-
 		Assert.assertNotNull(aContextMenu);
-		Assert.assertTrue(aContextMenu.hasAttr(Attr.POPABLE), Assert.ARG);
-		Assert.assertEquals(aContextMenu.type, MenuType.CONTEXT_MENU,
-			Assert.ARG);
+		Assert.assertTrue(aContextMenu.hasAttr(19), 0);
+		Assert.assertEquals(aContextMenu.type, 1, 0);
 
 		aContextMenu.show();
-		menuBar.setMenu(aContextMenu);
+		this.menuBar.setMenu(aContextMenu);
 	}
 
 	public void showShortcutMenu(int a1stKey) {
-
 		int[] shortcuts = CommandEx.getShortcutsBy1stKey(a1stKey);
 		CommandEx[] scCmds = new CommandEx[shortcuts.length];
 
-		for (int i = 0, scIdx; i < shortcuts.length; ++i) {
-
-			scIdx = shortcuts[i];
+		for (int i = 0; i < shortcuts.length; i++) {
+			int scIdx = shortcuts[i];
 
 			scCmds[i] = CommandEx.create(CommandEx.getShortcutCommandId(scIdx),
-				CommandEx.getShortcutText(scIdx));
+					CommandEx.getShortcutText(scIdx));
 
 			scCmds[i].setEnabled(CommandEx.isShortcutEnabled(scIdx));
 		}
 
 		if (scCmds.length > 0) {
-
 			Menu scMenu = Menu.buildShortcutMenu(getId(), this, scCmds);
 
 			scMenu.show();
 
-			menuBar.setMenu(scMenu);
+			this.menuBar.setMenu(scMenu);
 		}
 	}
 
 	public void closeMenus() {
-
 		Menu menu = getRootMenu();
 		if (menu != null) {
-
 			menu.close();
 
-			if (menu.type != MenuType.WINDOW_MENU) {
+			if (menu.type != 0)
 				resetWindowMenu();
-			}
 		}
 	}
 
 	public void popoutMenus() {
-
 		Menu menu = getRootMenu();
 		if (menu != null) {
-
 			menu.popout();
 
-			if (menu.type != MenuType.WINDOW_MENU) {
-
+			if (menu.type != 0) {
 				resetWindowMenu();
 			}
 		}
 	}
 
 	protected void popoutMenusInFrontOf(Menu aMenu) {
-
-		closePopups(menuLayer, aMenu, false);
+		closePopups(this.menuLayer, aMenu, false);
 	}
 
 	protected Menu getTopMenu() {
-
-		return (Menu) menuLayer.getLastComponent();
+		return (Menu) this.menuLayer.getLastComponent();
 	}
 
 	protected Menu getRootMenu() {
-
-		return (Menu) menuLayer.getFirstComponent();
+		return (Menu) this.menuLayer.getFirstComponent();
 	}
 
 	protected boolean hasMenu() {
-
-		return menuLayer.getComponentCount() > 0;
+		return this.menuLayer.getComponentCount() > 0;
 	}
 
 	void appendMenu(Menu aMenu) {
+		if (!this.menuLayer.contains(aMenu)) {
+			this.menuLayer.addComponent(aMenu);
 
-		if (!menuLayer.contains(aMenu)) {
+			setCurrentFocused(aMenu.findFirstFocusable(), true);
 
-			menuLayer.addComponent(aMenu);
-
-			this.setCurrentFocused(aMenu.findFirstFocusable(), true);
-
-			menuBar.repaint(Reason.UPDATE);
+			this.menuBar.repaint(10);
 		}
 	}
 
 	void removeMenu(Menu aMenu) {
-
 		Assert.assertNotNull(aMenu);
 
-		menuLayer.removeComponent(aMenu);
+		this.menuLayer.removeComponent(aMenu);
 		initFocused();
 
-		menuBar.repaint(Reason.UPDATE);
+		this.menuBar.repaint(10);
 	}
 
 	void appendFloat(Popup aFloat) {
-
-		if (!floatLayer.contains(aFloat)) {
-			floatLayer.addComponent(aFloat);
-		}
+		if (!this.floatLayer.contains(aFloat))
+			this.floatLayer.addComponent(aFloat);
 	}
 
 	void removeFloat(Popup aFloat) {
-
-		floatLayer.removeComponent(aFloat);
+		this.floatLayer.removeComponent(aFloat);
 	}
 
 	public void closeFloats() {
-
-		closePopups(floatLayer, null, true);
+		closePopups(this.floatLayer, null, true);
 	}
 
 	public void popoutFloats() {
-
-		closePopups(floatLayer, null, false);
+		closePopups(this.floatLayer, null, false);
 	}
 
 	private void closePopups(Component aPopupLayer, Popup aStop, boolean aClose) {
-
-		Popup popup;
-
 		for (int i = aPopupLayer.getComponentCount(); i-- != 0;) {
-
-			popup = (Popup) aPopupLayer.getComponentAt(i);
+			Popup popup = (Popup) aPopupLayer.getComponentAt(i);
 			if (popup == aStop) {
 				return;
 			}
 
-			if (aClose) {
+			if (aClose)
 				popup.close();
-			} else {
+			else
 				popup.popout();
-			}
 		}
-
-		// aPopupLayer.setVisible(false);
 	}
 
-	/**
-	 * The given component is interested in animating its appearance and will
-	 * start receiving callbacks when it is visible in the window allowing it to
-	 * animate its appearance. This method would not register a component
-	 * instance more than once
-	 * 
-	 * @param aCmp component that would be animated
-	 */
 	public final void registerAnimated(Animation aCmp) {
-
-		if (!animatables.contains(aCmp)) {
-
-			animatables.addElement(aCmp);
+		if (!this.animatables.contains(aCmp)) {
+			this.animatables.addElement(aCmp);
 		}
 	}
 
-	/**
-	 * Indicate that component would no longer like to receive animation events
-	 * 
-	 * @param aCmp component that would no longer receive animation events
-	 */
 	public final void deregisterAnimated(Animation aCmp) {
-
-		animatables.removeElement(aCmp);
+		this.animatables.removeElement(aCmp);
 	}
 
-	/**
-	 * Has registered animations.
-	 * 
-	 * @return true if has registered animations
-	 */
 	public final boolean hasAnimations() {
-
-		return animatables.size() > 0;
+		return this.animatables.size() > 0;
 	}
 
-	/**
-	 * Makes sure all animations are repainted so they would be rendered in
-	 * every frame
-	 */
 	public final boolean repaintAnimations() {
-
-		// we don't save size() in a variable since the animate method may
-		// deregister the animation thus invalidating the size
 		boolean hasAnimation = false;
-		for (int iter = 0; iter < animatables.size(); iter++) {
-
-			Animation ani = (Animation) animatables.elementAt(iter);
-			if (ani.animate()) {
-
-				Log.d(Animation.TAG, ani);
-				if (ani instanceof Component) {
-					// ask repaint
-					Component cmp = (Component) ani;
-					cmp.repaint(Reason.ANIMATING);
-				} else {
-					// directly post to paint
-					CanvasEx.postRepaint(ani);
-				}
-				hasAnimation = true;
+		for (int iter = 0; iter < this.animatables.size(); iter++) {
+			Animation ani = (Animation) this.animatables.elementAt(iter);
+			if (!ani.animate())
+				continue;
+			Log.d("ANIMATION", ani);
+			if ((ani instanceof Component)) {
+				Component cmp = (Component) ani;
+				cmp.repaint(24);
+			} else {
+				CanvasEx.postRepaint(ani);
 			}
+			hasAnimation = true;
 		}
-		
+
 		return hasAnimation;
 	}
 
-	/**
-	 * Makes sure the component is visible in the scroll if this container is
-	 * scrollable
-	 * 
-	 * @param aCmp the component to be visible
-	 */
 	public final void scrollComponentToVisible(Component aCmp) {
-
 		Component scrollableParent = aCmp.getScrollableParent();
 
 		if (scrollableParent != null) {
-
 			scrollableParent.scrollComponentToVisible(aCmp);
 		}
 	}
 
 	public final void initFocused() {
-
 		if (hasMenu()) {
-			this.setCurrentFocused(getTopMenu().findFirstFocusable(), true);
+			setCurrentFocused(getTopMenu().findFirstFocusable(), true);
 		} else if (hasModal()) {
-			this.setCurrentFocused(getTopModal().findFirstFocusable(), true);
-		} else {
-			if (oldFocused != null) {
-				this.setCurrentFocused(oldFocused);
-				oldFocused = null;
-			} else if (focused == null) {
-				this.setCurrentFocused(findFirstFocusable());
-			}
+			setCurrentFocused(getTopModal().findFirstFocusable(), true);
+		} else if (this.oldFocused != null) {
+			setCurrentFocused(this.oldFocused);
+			this.oldFocused = null;
+		} else if (this.focused == null) {
+			setCurrentFocused(findFirstFocusable());
 		}
 	}
 
-	/**
-	 * Sets the current focused component and fires the appropriate focus
-	 * changed event
-	 * 
-	 * @param aFocused the newly focused component or null for no focus
-	 */
 	public final void setCurrentFocused(Component aFocused) {
-
-		this.setCurrentFocused(aFocused, isModalPopup(aFocused), null);
+		setCurrentFocused(aFocused, isModalPopup(aFocused), null);
 	}
 
 	private final void setCurrentFocused(Component aFocused, Event aCauseEv) {
-
-		this.setCurrentFocused(aFocused, isModalPopup(aFocused), aCauseEv);
+		setCurrentFocused(aFocused, isModalPopup(aFocused), aCauseEv);
 	}
 
 	private final void setCurrentFocused(Component aFocused, boolean aFromModal) {
-
-		this.setCurrentFocused(aFocused, aFromModal, null);
+		setCurrentFocused(aFocused, aFromModal, null);
 	}
 
 	private final void setCurrentFocused(Component aFocused,
-		boolean aFromModal, Event aCauseEv) {
-
-		if (focused == aFocused) {
-			if (focused != null) {
-				focused.repaint(Reason.FOCUS_GAINED);
+			boolean aFromModal, Event aCauseEv) {
+		if (this.focused == aFocused) {
+			if (this.focused != null) {
+				this.focused.repaint(13);
 			}
 			return;
 		}
 
-		Component oldFocus = focused;
-		focused = aFocused;// change
+		Component oldFocus = this.focused;
+		this.focused = aFocused;
 
-		if (oldFocus != null && !aFromModal) {
+		if ((oldFocus != null) && (!aFromModal)) {
 			changeFocusState(oldFocus, false, aCauseEv);
 		}
 
-		if (focused != null) {
-			changeFocusState(focused, true, aCauseEv);
+		if (this.focused != null) {
+			changeFocusState(this.focused, true, aCauseEv);
 			if (aCauseEv != null) {
-				scrollComponentToVisible(focused);
+				scrollComponentToVisible(this.focused);
 			}
+
 		}
 
-		// new focused is inside a modal popup?
-		if (oldFocused == null && aFromModal) {
-			oldFocused = oldFocus;
-		}
+		if ((this.oldFocused == null) && (aFromModal))
+			this.oldFocused = oldFocus;
 	}
 
-	/**
-	 * Sets the current pressed component, set to <code>null</code> means no
-	 * component are on pressed state.
-	 */
 	private final void setCurrentPressed(Component aPressed) {
-
-		if (pressed != null && pressed.isPressed()) {
-
-			pressed.setPressed(false);
-			pressed.trigger();
+		if ((this.pressed != null) && (this.pressed.isPressed())) {
+			this.pressed.setPressed(false);
+			this.pressed.trigger();
 		}
 
-		pressed = aPressed;// change
-		if (pressed != null) {
-			pressed.setPressed(true);
-		}
+		this.pressed = aPressed;
+		if (this.pressed != null)
+			this.pressed.setPressed(true);
 	}
 
-	/**
-	 * Clear the current pressed component.
-	 */
 	private final void clearCurrentPressed() {
-
-		if (pressed != null) {
-
-			if (pressed.isPressed()) {
-				pressed.setPressed(false);
+		if (this.pressed != null) {
+			if (this.pressed.isPressed()) {
+				this.pressed.setPressed(false);
 			}
 
-			pressed = null;
+			this.pressed = null;
 		}
 	}
 
-	/**
-	 * Request focus for a window child component
-	 * 
-	 * @param aCmp the window child component
-	 */
 	protected final void requestFocus(Component aCmp) {
-
-		if (contains(aCmp) && aCmp.isFocusable()) {
-			this.setCurrentFocused(aCmp);
-		}
+		if ((contains(aCmp)) && (aCmp.isFocusable()))
+			setCurrentFocused(aCmp);
 	}
 
-	/**
-	 * Returns the current focus component for this window
-	 * 
-	 * @return the current focus component for this window
-	 */
 	public Component getFocused() {
-
-		return focused;
+		return this.focused;
 	}
 
-	/**
-	 * This method changes the component state to be focused/unfocused and fires
-	 * the focus gained/lost events.
-	 * 
-	 * @param aCmp the Component to change the focus state
-	 * @param aGained if true this Component needs to gain focus if false it
-	 *            needs to lose focus
-	 */
 	private void changeFocusState(Component aCmp, boolean aGained,
-		Event aCauseEv) {
-
+			Event aCauseEv) {
 		if (aGained) {
-
 			aCmp.setFocus(true);
 			aCmp.focusGained(aCauseEv);
-			aCmp.repaint(Reason.FOCUS_GAINED);
+			aCmp.repaint(13);
 		} else {
-
 			aCmp.setFocus(false);
 			aCmp.focusLost(aCauseEv);
-			aCmp.repaint(Reason.FOCUS_LOST);
+			aCmp.repaint(14);
 		}
 	}
 
-	/**
-	 * Sets the current dragged component, set to <code>null</code> means no
-	 * component are on dragged state.
-	 */
 	protected void setCurrentDragged(Component aDragged) {
-
-		dragged = aDragged;
-		if (dragged != null) {
-
-			dragged.repaint(Reason.DRAGGING);
+		this.dragged = aDragged;
+		if (this.dragged != null) {
+			this.dragged.repaint(21);
 		}
 
-		// clear current pressed if it is dragging
 		clearCurrentPressed();
 	}
 
-	/**
-	 * Event route entry in Window.
-	 */
 	public final boolean event(Event aEv) {
-
 		boolean isPt = aEv.isPointerEvent();
 		boolean isKey = aEv.isKeyEvent();
 
-		// 1, forward none pointer events to menubar first
-		if (!isPt && menuBar.event(aEv)) {
+		if ((!isPt) && (this.menuBar.event(aEv))) {
 			return true;
 		}
 
-		// 2, then forward key events to menu
 		if (hasMenu()) {
-
-			if (isKey && getTopMenu().event(aEv)) {
+			if ((isKey) && (getTopMenu().event(aEv))) {
 				return true;
 			}
 
-			// pressed outside menus, hit the menu layer will close all menus
-			if (isPt && aEv.type == EventType.POINTER_PRESSED) {
-				if (menuLayer.hitComponent(aEv.getX(), aEv.getY()) == menuLayer) {
-					closeMenus();
-				}
+			if ((isPt)
+					&& (aEv.type == 4)
+					&& (this.menuLayer.hitComponent(aEv.getX(), aEv.getY()) == this.menuLayer)) {
+				closeMenus();
 			}
+
 		}
 
-		// 3, then forward key events to modal
-		if (isKey && hasModal() && getTopModal().event(aEv)) {
+		if ((isKey) && (hasModal()) && (getTopModal().event(aEv))) {
 			return true;
 		}
 
-		// 4, then filter shortcut key
-		if (isKey && filterShortcut(aEv)) {
+		if ((isKey) && (filterShortcut(aEv))) {
 			return true;
 		}
 
-		// 5, then normal routing
-		if (super.event(aEv)) {
-			return true;
-		}
-
-		return false;
+		return super.event(aEv);
 	}
 
 	public void keyPressed(Event aKeyEv) {
+		if (this.focused != null) {
+			boolean hasModal = (hasModal()) || (hasMenu());
+			boolean hasModalFocused = (hasModal)
+					&& (isModalPopup(this.focused));
 
-		// forward to focused
-		if (focused != null) {
-
-			boolean hasModal = hasModal() || hasMenu();
-			boolean hasModalFocused = hasModal && isModalPopup(focused);
-
-			if (!hasModal || hasModalFocused) {
-
-				// forward to focused first
-				if (focused.event(aKeyEv)) {
-
-					if (focused == null) {
+			if ((!hasModal) || (hasModalFocused)) {
+				if (this.focused.event(aKeyEv)) {
+					if (this.focused == null) {
 						initFocused();
 					}
 
 					return;
 				}
 
-				// handled by window itself, set pressed or focus navigation
-				if (aKeyEv.isSelectKey() && focused.hasAttr(Attr.ACTIONABLE)) {
-					setCurrentPressed(focused);
+				if ((aKeyEv.isSelectKey()) && (this.focused.hasAttr(17))) {
+					setCurrentPressed(this.focused);
 				} else if (aKeyEv.isNavigationKey()) {
+					Component next = this.focused.findNextFocusable(
+							aKeyEv.getGameAction(), false);
 
-					Component next = focused.findNextFocusable(
-						aKeyEv.getGameAction(), false);
-					// if has modal, the focused need to be kept inside the
-					// modal
-					if (next != null && (!hasModal || isModalPopup(next))) {
-						this.setCurrentFocused(next, aKeyEv);
-					}
+					if ((next != null) && ((!hasModal) || (isModalPopup(next))))
+						setCurrentFocused(next, aKeyEv);
 				}
 			}
 		} else if (aKeyEv.isNavigationKey()) {
@@ -1186,57 +878,42 @@ public class Window extends Component {
 	}
 
 	public void keyReleased(Event aKeyEv) {
-
-		// release pressed first
 		setCurrentPressed(null);
 
-		// forward to focused
-		if (focused != null) {
-
-			// focused has accepted long click?
-			if (focused.hasState(State.TRIGGERED_LONG_CLICK)) {
-				focused.setState(State.TRIGGERED_LONG_CLICK, false);
-			} else {
-				focused.event(aKeyEv);
-			}
+		if (this.focused != null) {
+			if (this.focused.hasState(12))
+				this.focused.setState(12, false);
+			else
+				this.focused.event(aKeyEv);
 		}
 	}
 
 	public void keyRepeated(Event aKeyEv) {
-
-		// forward to focused
-		if (focused != null) {
-			focused.event(aKeyEv);
+		if (this.focused != null) {
+			this.focused.event(aKeyEv);
 		}
 
-		// event not accepted by focused component or no focused at current,
-		// by default will produces two fake key events (released then pressed)
-		// to simulate a repeated behavior
-		if (!aKeyEv.isAccepted() && !aKeyEv.isSelectKey()) {
+		if ((!aKeyEv.isAccepted()) && (!aKeyEv.isSelectKey())) {
+			CanvasEx.postKeyEvent(1, Event.NO_TARGET, aKeyEv.getKeyCode(),
+					false);
 
-			CanvasEx.postKeyEvent(EventType.KEY_RELEASED, Event.NO_TARGET,
-				aKeyEv.getKeyCode(), Event.INTERNAL);
-
-			CanvasEx.postKeyEvent(EventType.KEY_PRESSED, Event.NO_TARGET,
-				aKeyEv.getKeyCode(), Event.INTERNAL);
+			CanvasEx.postKeyEvent(0, Event.NO_TARGET, aKeyEv.getKeyCode(),
+					false);
 
 			aKeyEv.accept();
 		}
 	}
 
 	public void keyLongPressed(Event aKeyEv) {
-
-		// forward to focused
-		if (focused != null && focused.event(aKeyEv)) {
-			focused.setState(State.TRIGGERED_LONG_CLICK, true);
+		if ((this.focused != null) && (this.focused.event(aKeyEv))) {
+			this.focused.setState(12, true);
 			clearCurrentPressed();
 		}
 	}
 
 	public void pointerPressed(Event aPtEv) {
-
 		Component cmp = hitComponent(aPtEv.getX(), aPtEv.getY());
-		if (cmp == null || cmp == this || !cmp.isEnabled()) {
+		if ((cmp == null) || (cmp == this) || (!cmp.isEnabled())) {
 			return;
 		}
 
@@ -1244,141 +921,113 @@ public class Window extends Component {
 			return;
 		}
 
-		// set as focused
 		if (cmp.isFocusable()) {
-			this.setCurrentFocused(cmp, aPtEv);
+			setCurrentFocused(cmp, aPtEv);
 		}
 
-		// forward event, if not accepted and the clicked component
-		// is actionable will be set as current pressed
-		if (!cmp.event(aPtEv) && cmp.hasAttr(Attr.ACTIONABLE)) {
+		if ((!cmp.event(aPtEv)) && (cmp.hasAttr(17)))
 			setCurrentPressed(cmp);
-		}
 	}
 
 	public void pointerReleased(Event aPtEv) {
-
-		// release pressed first
 		setCurrentPressed(null);
 
-		if (dragged != null) {
-			dragged.event(aPtEv);
+		if (this.dragged != null) {
+			this.dragged.event(aPtEv);
 			setCurrentDragged(null);
 			return;
 		}
 
-		// focused has accepted long click?
-		if (focused != null && focused.hasState(State.TRIGGERED_LONG_CLICK)) {
-			focused.setState(State.TRIGGERED_LONG_CLICK, false);
+		if ((this.focused != null) && (this.focused.hasState(12))) {
+			this.focused.setState(12, false);
 			return;
 		}
 
 		Component cmp = hitComponent(aPtEv.getX(), aPtEv.getY());
-		if (cmp == null || cmp == this || !cmp.isEnabled()) {
+		if ((cmp == null) || (cmp == this) || (!cmp.isEnabled())) {
 			return;
 		}
 
-		// set as focused
 		if (cmp.isFocusable()) {
-			this.setCurrentFocused(cmp, aPtEv);
+			setCurrentFocused(cmp, aPtEv);
 		}
 
-		// forward event
 		cmp.event(aPtEv);
 	}
 
 	public void pointerDragged(Event aPtEv) {
-
-		if (dragged != null) {
-			dragged.event(aPtEv);
+		if (this.dragged != null) {
+			this.dragged.event(aPtEv);
 			return;
 		}
 
 		Component cmp = hitComponent(aPtEv.getX(), aPtEv.getY());
-		if (cmp == null || cmp == this || cmp == menuBar || cmp == titleBar
-			|| !cmp.isEnabled()) {
+		if ((cmp == null) || (cmp == this) || (cmp == this.menuBar)
+				|| (cmp == this.titleBar) || (!cmp.isEnabled())) {
 			return;
 		}
 
-		// set as focused
-		if (cmp.isFocusable() && !cmp.hasFocus()) {
-			this.setCurrentFocused(cmp, aPtEv);
+		if ((cmp.isFocusable()) && (!cmp.hasFocus())) {
+			setCurrentFocused(cmp, aPtEv);
 		}
 
-		// forward event
 		cmp.event(aPtEv);
 	}
 
 	public void pointerLongPressed(Event aPtEv) {
-
 		Component cmp = hitComponent(aPtEv.getX(), aPtEv.getY());
-		if (cmp == null || cmp == this || !cmp.isEnabled()) {
+		if ((cmp == null) || (cmp == this) || (!cmp.isEnabled())) {
 			return;
 		}
 
-		// forward to focused
-		if (focused != null && focused.event(aPtEv)) {
-			focused.setState(State.TRIGGERED_LONG_CLICK, true);
+		if ((this.focused != null) && (this.focused.event(aPtEv))) {
+			this.focused.setState(12, true);
 			clearCurrentPressed();
 		}
 	}
 
 	public void progressEvent(Event aProgressEv) {
+		Log.d("Win", "Startup progress : ", aProgressEv);
 
-		Log.d(TAG, "Startup progress : ", aProgressEv);
-
-		// step forward
 		gProgress = (gProgress + 1) % gProgressSegments;
 		gProgressMessage = aProgressEv.getProgressInfo().toString();
 
-		this.repaint(Reason.PROGRESS);
+		repaint(25);
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	public void sizeChanged(int aNewWidth, int aNewHeight) {
-
-		layout();// relayout
-		this.repaint(Reason.RELAYOUT);
+		layout();
+		repaint(30);
 	}
 
 	public void onEventError(Throwable aErr) {
-
 		super.onEventError(aErr);
 
-		// recover
 		recoverError();
 
-		// show error dialog
-		Popup.buildSimpleDialog(Popup.ERR_DIALOG, "Error",
-			aErr.getMessage() != null ? aErr.getMessage() : aErr.toString(),
-			null, CommandEx.CMD_BACKWARD).show();
+		Popup.buildSimpleDialog(
+				"ErrorDlg",
+				"Error",
+				aErr.getMessage() != null ? aErr.getMessage() : aErr.toString(),
+				null, CommandEx.CMD_BACKWARD).show();
 	}
 
 	private boolean filterShortcut(Event aEv) {
-
 		int keycode = aEv.getKeyCode();
 		int scIdx = CommandEx.findShortcut(keycode, 0);
 
 		if (scIdx >= 0) {
-
 			int cmdId = CommandEx.getShortcutCommandId(scIdx);
 
-			if (aEv.type == EventType.KEY_RELEASED) {
-
-				// post shortcut event directly
+			if (aEv.type == 1) {
 				CanvasEx.postShortcutActionEvent(Event.NO_TARGET, keycode, 0,
-					cmdId);
+						cmdId);
 			}
 			return true;
 		}
 
 		if (CommandEx.getShortcutCountBy1stKey(keycode) > 0) {
-
-			if (aEv.type == EventType.KEY_RELEASED) {
-
-				// show shortcut menu directly
+			if (aEv.type == 1) {
 				showShortcutMenu(keycode);
 			}
 
@@ -1389,37 +1038,28 @@ public class Window extends Component {
 	}
 
 	private final boolean clearScrollingAndDragging(Component aCmp) {
-
 		for (Component c = aCmp; c != null; c = c.getParent()) {
+			if ((!c.isScrolling()) && (!c.isDragging()))
+				continue;
+			if (c.isScrolling()) {
+				c.stopSmoothScroll();
 
-			// scrolling or dragging
-			if (c.isScrolling() || c.isDragging()) {
-
-				if (c.isScrolling()) {
-
-					// stop first
-					c.stopSmoothScroll();
-					// guard scroll, scroll back when out of range
-					c.guardScroll();
-				}
-
-				if (c.isDragging()) {
-
-					// clear drag
-					c.clearDrag();
-					// clear current dragged
-					setCurrentDragged(null);
-				}
-
-				return true;
+				c.guardScroll();
 			}
+
+			if (c.isDragging()) {
+				c.clearDrag();
+
+				setCurrentDragged(null);
+			}
+
+			return true;
 		}
 
 		return false;
 	}
 
 	protected void recoverError() {
-
 		closeModals();
 		closeMenus();
 		closeFloats();
@@ -1433,89 +1073,73 @@ public class Window extends Component {
 		CanvasEx.repaintCanvas();
 	}
 
-	/**
-	 * Post the repaint component to CanvasEx's paint queue.
-	 * 
-	 * @inheritDoc
-	 */
 	final void repaint(Component aCmp) {
-
-		if (isVisible()) {
+		if (isVisible())
 			CanvasEx.postRepaint(aCmp);
-		}
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	protected void paintContent(GraphicsEx aG) {
-
-		if (hasAttr(Attr.SPLASH)) {
+		if (hasAttr(0)) {
 			drawSplash(aG);
 		}
 
 		super.paintContent(aG);
 	}
 
-	/** {@inheritDoc} */
 	protected void paintBackground(GraphicsEx aG) {
-
-		if (hasAttr(Attr.SPLASH)) {
-			aG.setBrush(Brush.createColorBrush(0xFF041D34));
-			aG.fillRectEx(x, y, width, height);
+		if (hasAttr(0)) {
+			aG.setBrush(Brush.createColorBrush(-16507596));
+			aG.fillRectEx(this.x, this.y, this.width, this.height);
 		} else {
 			super.paintBackground(aG);
 		}
 	}
 
 	private void drawSplash(GraphicsEx aG) {
+		aG.save(2);
+		aG.translate(this.x, this.y);
 
-		aG.save(GraphicsEx.SAVE_TRANSLATION);
-		aG.translate(x, y);
+		int upHeight = this.height * 2 / 3;
+		int btHeight = this.height - upHeight;
 
-		int upHeight = height * 2 / 3;
-		int btHeight = height - upHeight;
+		Image startup = this.logos[0];
+		Image verlogo = this.logos[1];
+		Image progresson = this.logos[2];
+		Image progressoff = this.logos[3];
 
-		Image startup = logos[0];
-		Image verlogo = logos[1];
-		Image progresson = logos[2];
-		Image progressoff = logos[3];
+		int x = GraphicsEx.getBoxX(startup.getWidth(), 0, this.width, 0, 129);
+		int y = GraphicsEx.getBoxY(startup.getHeight(), 0, upHeight, 0, 130);
 
-		// draw startup logo
-		int x = GraphicsEx.getBoxX(startup.getWidth(), 0, width, 0,
-			GraphicsEx.IN_BOX | GraphicsEx.HCENTER);
-		int y = GraphicsEx.getBoxY(startup.getHeight(), 0, upHeight, 0,
-			GraphicsEx.IN_BOX | GraphicsEx.VCENTER);
+		aG.drawImage(startup, x, y, 20);
 
-		aG.drawImage(startup, x, y, GraphicsEx.LEFT_TOP);
-
-		// draw version logo
-		x = GraphicsEx.getBoxX(verlogo.getWidth(), 0, width, 0,
-			GraphicsEx.IN_BOX | GraphicsEx.HCENTER);
+		x = GraphicsEx.getBoxX(verlogo.getWidth(), 0, this.width, 0, 129);
 		y += startup.getHeight() + verlogo.getHeight() / 4;
 
-		aG.drawImage(verlogo, x, y, GraphicsEx.LEFT_TOP);
+		aG.drawImage(verlogo, x, y, 20);
 
-		// draw progress message
 		y = GraphicsEx.getBoxY(aG.getFont().getHeight(), upHeight,
-			btHeight / 2, 0, GraphicsEx.IN_BOX | GraphicsEx.VCENTER);
+				btHeight / 2, 0, 130);
 
-		aG.setColor(Color.ALICEBLUE);
-		aG.drawBoxedString(gProgressMessage, 0, 0, 0, y, width, btHeight / 2,
-			GraphicsEx.HCENTER | GraphicsEx.VCENTER | GraphicsEx.BASELINE);
+		aG.setColor(-984833);
+		aG.drawBoxedString(gProgressMessage, 0, 0, 0, y, this.width,
+				btHeight / 2, 67);
 
-		// draw progress
 		x = GraphicsEx.getBoxX(progresson.getWidth() * gProgressSegments, 0,
-			width, 0, GraphicsEx.IN_BOX | GraphicsEx.HCENTER);
+				this.width, 0, 129);
 		y = GraphicsEx.getBoxY(progresson.getHeight(), upHeight, btHeight, 0,
-			GraphicsEx.IN_BOX | GraphicsEx.VCENTER);
+				130);
 
-		for (int i = 0; i < gProgressSegments; ++i, x += progresson.getWidth()) {
-
+		for (int i = 0; i < gProgressSegments; x += progresson.getWidth()) {
 			Image pgicon = i == gProgress ? progresson : progressoff;
-			aG.drawImage(pgicon, x, y, GraphicsEx.LEFT_TOP);
+			aG.drawImage(pgicon, x, y, 20);
+
+			i++;
 		}
 
 		aG.restore();
+	}
+
+	public void setTitle(Component aTitle) {
+		this.titleBar.setTitle(aTitle);
 	}
 }
