@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<mtjMetadata jad="weixin.jad" version="1.2.1.v201009031435">
-   <device group="Sun Java(TM) Wireless Toolkit 2.5.2 for CLDC" name="DefaultColorPhone"/>
+<mtjMetadata version="1.2.1.v201009031435">
    <signing projectSpecific="false" signProject="false">
       <alias/>
    </signing>
@@ -24,7 +23,7 @@
             <symbol name="screen.width" value="240"/>
             <symbol name="JSR238" value="1.0"/>
             <symbol name="JSR239" value="1.0"/>
-            <symbol name="screen.isTouch" value="true"/>
+            <symbol name="screen.isTouch" value="false"/>
             <symbol name="JSR211" value="1.0"/>
             <symbol name="JSR234" value="1.0"/>
             <symbol name="SATSA-APDU" value="1.0"/>
