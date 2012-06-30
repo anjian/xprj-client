@@ -39,6 +39,7 @@ import cn.uc.util.debug.Log;
  */
 public class ButtonDemo extends MIDlet implements EventHandler, MenuSource {
 
+	//test for push
 	static final int CMD_ID_COLOR = 1000;
 	static final int CMD_ID_ALPHA = 1001;
 	static final int CMD_ID_T_COLOR = 1002;
