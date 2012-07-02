@@ -2,7 +2,6 @@ package india.xxoo.main;
 import india.xxoo.ui.MainCanvas;
 import india.xxoo.ui.UIManager;
 
-import javax.microedition.lcdui.Display;
 import javax.microedition.midlet.MIDlet;
 import javax.microedition.midlet.MIDletStateChangeException;
 

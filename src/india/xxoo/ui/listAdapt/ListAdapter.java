@@ -3,8 +3,9 @@
  * 
  * Copyright (c) 2010, 2011 UC Mobile, All rights reserved.
  */
-package cn.uc.tiny;
+package india.xxoo.ui.listAdapt;
 
+import cn.uc.tiny.ListView;
 import cn.uc.tiny.ex.Event;
 import cn.uc.tiny.ex.EventHandler;
 import cn.uc.tiny.ex.GraphicsEx;

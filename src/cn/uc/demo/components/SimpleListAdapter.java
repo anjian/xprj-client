@@ -5,7 +5,7 @@
  */
 package cn.uc.demo.components;
 
-import cn.uc.tiny.ListAdapter;
+import india.xxoo.ui.listAdapt.ListAdapter;
 import cn.uc.tiny.ListView;
 import cn.uc.tiny.Popup;
 import cn.uc.tiny.ex.BasicEventHandler;

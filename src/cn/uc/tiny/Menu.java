@@ -5,17 +5,19 @@
  */
 package cn.uc.tiny;
 
+import india.xxoo.ui.listAdapt.ListAdapter;
+
 import javax.microedition.lcdui.Canvas;
 
 import cn.uc.tiny.animations.Motion;
 import cn.uc.tiny.ex.Brush;
 import cn.uc.tiny.ex.CanvasEx;
+import cn.uc.tiny.ex.Color;
 import cn.uc.tiny.ex.CommandEx;
 import cn.uc.tiny.ex.Event;
+import cn.uc.tiny.ex.Event.EventType;
 import cn.uc.tiny.ex.EventHandler;
 import cn.uc.tiny.ex.GraphicsEx;
-import cn.uc.tiny.ex.Color;
-import cn.uc.tiny.ex.Event.EventType;
 import cn.uc.tiny.geom.Rectangle;
 import cn.uc.util.StringUtils;
 import cn.uc.util.debug.Assert;

@@ -1,10 +1,9 @@
-package india.xxoo.ui.chartList;
+package india.xxoo.ui.listAdapt;
 
 import java.util.Vector;
 
 import javax.microedition.lcdui.Image;
 
-import cn.uc.tiny.ListAdapter;
 import cn.uc.tiny.ListView;
 import cn.uc.tiny.Popup;
 import cn.uc.tiny.ex.BasicEventHandler;

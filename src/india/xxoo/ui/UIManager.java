@@ -1,30 +1,37 @@
 package india.xxoo.ui;
 
+import india.xxoo.ui.listAdapt.ChartListAdapt;
+import india.xxoo.ui.listAdapt.ContactListAdapt;
+import india.xxoo.ui.listAdapt.ListAdapter;
+
+import javax.microedition.midlet.MIDlet;
+
 import cn.uc.demo.components.Button;
 import cn.uc.demo.components.GridContainer;
 import cn.uc.demo.components.MenuWindow;
 import cn.uc.tiny.Component;
-import cn.uc.tiny.ListAdapter;
 import cn.uc.tiny.ListView;
 import cn.uc.tiny.Menu;
 import cn.uc.tiny.MenuSource;
-import cn.uc.tiny.Window;
 import cn.uc.tiny.ex.CanvasEx;
 import cn.uc.tiny.ex.CommandEx;
 import cn.uc.tiny.ex.Event;
 import cn.uc.tiny.ex.EventHandler;
 import cn.uc.tiny.ex.FontEx;
-import india.xxoo.ui.chartList.ChartListAdapt;
-import india.xxoo.ui.contactList.ContactListAdapt;
-import java.io.PrintStream;
-import javax.microedition.midlet.MIDlet;
 
 public class UIManager implements EventHandler, MenuSource {
 	public MIDlet iMid;
+	
 	public static final String CONTACT = "co";
 	public static final String CHART = "ch";
 	public static final String HOME = "ho";
 	public static final String SEND = "s";
+	public static final String ADD_FRIEND = "af";
+	
+	public static final String MARTCH = "m";
+	public static final String SEARCH = "se";
+	public static final String INVITE_FRIEND = "if";
+	
 	ListAdapter listAdapter;
 	InputBar textBox;
 	//sadsa
@@ -38,20 +45,20 @@ public class UIManager implements EventHandler, MenuSource {
 				.getHeight(), 0);
 
 		Button contact = new Button();
-		contact.setId("co");
-		contact.setText("联系人");
+		contact.setId(HOME);
+		contact.setText("Home");
 		contact.setActionTarget(this);
 		grid.addComponent(contact);
 
 		Button chart = new Button();
-		chart.setId("ch");
-		chart.setText("聊天记录");
+		chart.setId(CONTACT);
+		chart.setText("Contact");
 		chart.setActionTarget(this);
 		grid.addComponent(chart);
 
 		Button home = new Button();
-		home.setId("ho");
-		home.setText("个人主页");
+		home.setId(ADD_FRIEND);
+		home.setText("+Friend");
 		home.setActionTarget(this);
 		grid.addComponent(home);
 
@@ -97,6 +104,7 @@ public class UIManager implements EventHandler, MenuSource {
 		Button send = new Button();
 		send.setActionTarget(this);
 		send.setId("s");
+		send.setText("Send");
 		input.addComponent(this.textBox);
 		input.addComponent(send);
 
@@ -106,11 +114,50 @@ public class UIManager implements EventHandler, MenuSource {
 
 		this.textBox.setBounds(0, 0, 199, sInputHeight);
 		send.setBounds(199, 0, 40, sInputHeight);
-		send.setText("发送");
+		
 
 		view.addComponent(list);
 		view.addComponent(input);
 
+		win.setMenuSource(this);
+		win.setTitle(title);
+		win.addView(view);
+		win.show();
+	}
+	
+	public void displayAddFriend(){
+		CanvasEx.initCanvas(iMid);
+		FontEx.initializeUsedFonts(185);
+		FontEx.setDefaultFont(FontEx.getFont(0, 0));
+
+		Component title = createNormalTitleBar();
+		MenuWindow win = new MenuWindow();
+		Component view = new Component();
+
+		GridContainer aGride = new GridContainer();
+		aGride.setCol(1);
+//		aGride.setSpacing();
+		//匹配
+		Button sMatch = new Button();
+		sMatch.setId(MARTCH);
+		sMatch.setText("Match");
+		sMatch.setActionTarget(this);
+		//寻找
+		Button sSearch = new Button();
+		sSearch.setId(SEARCH);
+		sSearch.setText("Search");
+		sSearch.setActionTarget(this);
+		//推荐
+		Button sInvite = new Button();
+		sInvite.setId(INVITE_FRIEND);
+		sInvite.setText("Invite Friend");
+		sInvite.setActionTarget(this);
+		
+		aGride.addComponent(sMatch);
+		aGride.addComponent(sSearch);
+		aGride.addComponent(sInvite);
+		
+		view.addComponent(aGride);
 		win.setMenuSource(this);
 		win.setTitle(title);
 		win.addView(view);
@@ -133,17 +180,19 @@ public class UIManager implements EventHandler, MenuSource {
 		if (aEv.isComponentAction()) {
 			Button button = (Button) aEv.getActionComponent();
 			String id = button.getId();
-			if ("ch".equals(id))
+			if (CHART.equals(id))
 				displayChartList();
-			else if ("co".equals(id))
+			else if (CONTACT.equals(id))
 				displayContactList();
-			else if (!"ho".equals(id)) {
-				if (("s".equals(id))
+			else if (!HOME.equals(id)) {
+				if ((SEND.equals(id))
 						&& ((this.listAdapter instanceof ChartListAdapt))) {
 					((ChartListAdapt) this.listAdapter).addChart(1, 0, 2,
 							this.textBox.getText());
 					this.textBox.clear();
 				}
+			}else if(ADD_FRIEND.equals(id)){
+				displayAddFriend();
 			}
 		}
 		return false;

@@ -5,14 +5,16 @@
  */
 package cn.uc.tiny;
 
+import india.xxoo.ui.listAdapt.ListAdapter;
+
 import javax.microedition.lcdui.Canvas;
 
 import cn.uc.tiny.ex.Brush;
 import cn.uc.tiny.ex.CanvasEx;
-import cn.uc.tiny.ex.Event;
-import cn.uc.tiny.ex.GraphicsEx;
 import cn.uc.tiny.ex.Color;
+import cn.uc.tiny.ex.Event;
 import cn.uc.tiny.ex.Event.EventType;
+import cn.uc.tiny.ex.GraphicsEx;
 import cn.uc.util.NumberUtils;
 
 /**

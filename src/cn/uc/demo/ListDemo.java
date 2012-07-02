@@ -5,6 +5,8 @@
  */
 package cn.uc.demo;
 
+import india.xxoo.ui.listAdapt.ListAdapter;
+
 import javax.microedition.midlet.MIDlet;
 import javax.microedition.midlet.MIDletStateChangeException;
 
@@ -12,7 +14,6 @@ import cn.uc.T;
 import cn.uc.demo.components.SimpleListAdapter;
 import cn.uc.demo.components.SimpleWindow;
 import cn.uc.tiny.Component;
-import cn.uc.tiny.ListAdapter;
 import cn.uc.tiny.ListView;
 import cn.uc.tiny.Menu;
 import cn.uc.tiny.MenuSource;

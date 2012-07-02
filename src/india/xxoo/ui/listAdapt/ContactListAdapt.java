@@ -1,14 +1,15 @@
-package india.xxoo.ui.contactList;
+package india.xxoo.ui.listAdapt;
 
-import cn.uc.tiny.ListAdapter;
+import java.io.IOException;
+
+import javax.microedition.lcdui.Image;
+
 import cn.uc.tiny.ListView;
 import cn.uc.tiny.Popup;
 import cn.uc.tiny.ex.BasicEventHandler;
 import cn.uc.tiny.ex.Event;
 import cn.uc.tiny.ex.FontEx;
 import cn.uc.tiny.ex.GraphicsEx;
-import java.io.IOException;
-import javax.microedition.lcdui.Image;
 
 public class ContactListAdapt extends BasicEventHandler
   implements ListAdapter
