@@ -132,10 +132,10 @@ public class UIManager implements EventHandler, MenuSource {
 
 		Component title = createNormalTitleBar();
 		MenuWindow win = new MenuWindow();
-		Component view = new Component();
 
 		GridContainer aGride = new GridContainer();
-		aGride.setCol(1);
+		aGride.setCol(3);
+//		aGride.setPosition(, aY);
 //		aGride.setSpacing();
 		//∆•≈‰
 		Button sMatch = new Button();
@@ -157,10 +157,9 @@ public class UIManager implements EventHandler, MenuSource {
 		aGride.addComponent(sSearch);
 		aGride.addComponent(sInvite);
 		
-		view.addComponent(aGride);
 		win.setMenuSource(this);
 		win.setTitle(title);
-		win.addView(view);
+		win.addView(aGride);
 		win.show();
 	}
 
@@ -184,14 +183,12 @@ public class UIManager implements EventHandler, MenuSource {
 				displayChartList();
 			else if (CONTACT.equals(id))
 				displayContactList();
-			else if (!HOME.equals(id)) {
-				if ((SEND.equals(id))
-						&& ((this.listAdapter instanceof ChartListAdapt))) {
-					((ChartListAdapt) this.listAdapter).addChart(1, 0, 2,
-							this.textBox.getText());
+			else if (HOME.equals(id)){
+				if (SEND.equals(id) && ((this.listAdapter instanceof ChartListAdapt))){
+					((ChartListAdapt) this.listAdapter).addChart(1, 0, 2, this.textBox.getText());
 					this.textBox.clear();
 				}
-			}else if(ADD_FRIEND.equals(id)){
+			}else if (ADD_FRIEND.equals(id)){
 				displayAddFriend();
 			}
 		}
